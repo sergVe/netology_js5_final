@@ -8,152 +8,250 @@ class Vector {
 
   plus(addedVector) {
 
-      if (!(addedVector instanceof Vector)) {
-        throw `Можно прибавлять к вектору только вектор типа Vector`;
-      }
-      return new Vector(this.x + addedVector.x, this.y + addedVector.y);
+    if (!(addedVector instanceof Vector)) {
+      throw new Error('Error');
+    }
+    try {
+      this.x += addedVector.x;
+      this.y += addedVector.y;
+      return new Vector(this.x, this.y);
+    }
+    catch (e) {
+      console.log(e);
+    }
+
   }
 
   times(multiplier) {
 
-      if (typeof multiplier !== 'number') {
-        throw `В качестве множителя должно быть число`;
-      }
-      else {
-        this.x *= multiplier;
-        this.y *= multiplier;
+    if (typeof multiplier !== 'number') {
+      throw `В качестве множителя должно быть число`;
+    }
+    try {
 
-        return new Vector(this.x, this.y);
-      }
+      this.x *= multiplier;
+      this.y *= multiplier;
+
+      return new Vector(this.x, this.y);
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 }
 
 // ************************************
 
-/*
- const start = new Vector(30, 50);
- const moveTo = new Vector(5, 10);
- const finish = start.plus(moveTo.times(2));
-
- console.log(`Исходное расположение: ${start.x}:${start.y}`);
- console.log(`Текущее расположение: ${finish.x}:${finish.y}`);*/
-
-// ************************************
-
 class Actor {
   constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
-    //console.log([...arguments]);
-    if (arguments.length > 0 && [...arguments].some((item) => !(item instanceof Vector))) {
-      throw `Все аргументы должны быть объектами типа Vector`;
+
+    if (arguments.length > 0 && [pos, size, speed].some((item) => !(item instanceof Vector))) {
+      throw new Error(`Все аргументы должны быть объектами типа Vector`);
     }
 
-    this.pos = new Vector(pos.x, pos.y);
-    this.size = new Vector(size.x, size.y);
-    this.speed = new Vector(speed.x, speed.y);
+    try {
+      this.pos = pos;
+      this.size = size;
+      this.speed = new Vector(speed.x, speed.y);
 
-    this.act = function () {
-    };
+      this.act = function () {
+      };
 
-    Object.defineProperty(this, 'type', {
-      value: 'actor'
-    });
-    Object.defineProperty(this, 'left', {
-      get() {
-        return this.pos.x;
-      }
-    });
-    Object.defineProperty(this, 'top', {
-      get() {
-        return this.pos.y;
-      },
-      enumerable: true
-    });
-    Object.defineProperty(this, 'right', {
-      get() {
-        return this.pos.x + this.size.x;
-      },
-      enumerable: true
-    });
-    Object.defineProperty(this, 'bottom', {
-      get() {
-        return this.pos.y + this.size.y;
-      },
-      enumerable: true
+      Object.defineProperty(this, 'type', {
+        value: 'actor'
+      });
+      Object.defineProperty(this, 'left', {
+        get() {
+          return this.pos.x;
+        }
+      });
+      Object.defineProperty(this, 'top', {
+        get() {
+          return this.pos.y;
+        },
+        enumerable: true
+      });
+      Object.defineProperty(this, 'right', {
+        get() {
+          return this.pos.x + this.size.x;
+        },
+        enumerable: true
+      });
+      Object.defineProperty(this, 'bottom', {
+        get() {
+          return this.pos.y + this.size.y;
+        },
+        enumerable: true
 
-    });
+      });
+    }
+    catch (e) {
+      console.log(e);
+    }
 
   }
 
 
   isIntersect(actorInstance) {
 
-    const isHalfIntersect = (transferredObject, thisObject, p1, p2, p3, p4) => {
-      if ((transferredObject[p1] >= thisObject[p1] && transferredObject[p1] <= thisObject[p2])
-        && (transferredObject[p3] >= thisObject[p3] && transferredObject[p3] <= thisObject[p4] ||
-        transferredObject[p4] >= thisObject[p3] && transferredObject[p4] <= thisObject[p4])) {
-        //console.log(`yes`);
-        return true;
+    const I = (a, b, x1, x2, y1, y2) => !(a[x2] <= b[x1] || a[x1] >= b[x2] || a[y2] <= b[y1] || a[y1] >= b[y2]);
+
+    if (!(actorInstance instanceof Actor)) {
+      throw new Error(`Вы не передали аргумент типа Actor`);
+    }
+    try {
+      if (this === actorInstance) {
+        return false;
       }
-      //console.log(`no`, this[p1], actorInstance[p1]);
-      return false;
-    };
+      else {
+        return I(actorInstance, this, 'left', 'right', 'top', 'bottom');
 
-    if (arguments.length === 0 || !(actorInstance instanceof Actor)) {
-      throw `Вы не передали аргумент типа Actor`;
+      }
     }
-    if (this === actorInstance) {
-      return false;
+    catch (e) {
+      console.log(e);
     }
-    else {
-      return isHalfIntersect(actorInstance, this, 'left', 'right', 'top', 'bottom')
-        || isHalfIntersect(actorInstance, this,
-          'right', 'left', 'top', 'bottom');
-    }
-
   }
+
 }
 
-
-const items = new Map();
-const player = new Actor();
-items.set('Игрок', player);
-items.set('Первая монета', new Actor(new Vector(10, 10)));
-items.set('Вторая монета', new Actor(new Vector(15, 5)));
-
-function position(item) {
-  return ['left', 'top', 'right', 'bottom']
-    .map(side => `${side}: ${item[side]}`)
-    .join(', ');
-}
-
-function movePlayer(x, y) {
-  player.pos = player.pos.plus(new Vector(x, y));
-}
-
-function status(item, title) {
-  console.log(`${title}: ${position(item)}`);
-  if (player.isIntersect(item)) {
-    console.log(`Игрок подобрал ${title}`);
-  }
-}
-
-/*items.forEach(status);
- movePlayer(10, 10);
- //console.log(player);
- items.forEach(status);
- movePlayer(5, -5);
- items.forEach(status);*/
-
-// ***************************************************8
+// ***************************************************
 
 class Level {
   constructor(gridMatrix = [], movingObjectsArray = []) {
-    if (arguments.length > 0 && [...arguments].some(item => !Array.isArray(item))) {
-      throw `game over`;
+
+    this.grid = gridMatrix.slice();
+
+    this.actors = movingObjectsArray.slice().filter(item => item instanceof Object);
+
+
+    Object.defineProperty(this, 'player', {
+      get() {return this.actors.filter(item => item.type === 'player')[0]},
+      enumerable: true,
+      configurable: true
+    });
+    Object.defineProperty(this, 'height', {
+      get() {
+        return (this.grid.every(item => Array.isArray(item))) ? this.grid.length : 1;
+      }
+    });
+    Object.defineProperty(this, 'width', {
+      get() {
+        let start = this.height > 1 ? this.grid[0].length : this.grid.length;
+        return this.grid.reduce((memo, item) => item.length > memo ? item.length : memo, start);
+      }
+    });
+    this.status = null;
+    this.finishDelay = 1;
+
+  }
+
+  isFinished() {
+    return this.status !== null && this.finishDelay < 0 || false;
+  }
+
+  actorAt(actorInstance) {
+    if (arguments.length === 0 || !(actorInstance instanceof Actor)) {
+      throw new Error(`Вы не передали движущийся объект`);
+    }
+    try {
+      return this.actors.find(item => item.isIntersect(actorInstance));
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
+
+  obstacleAt(objectPositionProspective, objectSize) {
+    if (arguments.length < 2 || [objectPositionProspective, objectSize].some(item => !item instanceof Vector)) {
+      throw `Вы не передали объекты типа Vector`;
+    }
+    const borderCheck = (actorInstance) => {
+
+      if (actorInstance.left < 0 || actorInstance.right > this.width
+        || actorInstance.top < 0) {
+        return 'wall';
+      }
+      if (actorInstance.bottom > this.height) {
+        return 'lava';
+      }
+      return false;
+    };
+
+    try {
+      const virtualActor = new Actor(objectPositionProspective, objectSize);
+      const checkResult = borderCheck(virtualActor);
+      if (checkResult) {
+        return checkResult;
+      }
+      const searchRowInd = this.grid.findIndex((row, ind) => row.find((ceil, pos) =>
+        virtualActor.isIntersect(new Actor(new Vector(pos, ind)))));
+
+      return searchRowInd !== -1
+        ? this.grid[searchRowInd]
+          .find((ceil, pos) => virtualActor.isIntersect(new Actor(new Vector(pos, searchRowInd)))) : undefined;
+    }
+    catch (e) {
+      console.log(e);
+    }
+  }
+
+  removeActor(actorInstance) {
+    const foundIndex = this.actors.findIndex(item => item === actorInstance);
+    if (foundIndex !== -1) {
+      this.actors.splice(foundIndex, 1);
+    }
+  }
+
+  noMoreActors(typeString) {
+    return this.actors.length === 0 || !this.actors.some(item => item.type === typeString);
+  }
+
+  playerTouched(typeObjectString, actorInstance) {
+    if (typeof  typeObjectString !== 'string') {
+      throw new Error(`Вы не передали стоку в первом обязательном параметре метода playerTouched`);
+    }
+    try {
+      if (['lava', 'fireball'].find(item => item === typeObjectString)) {
+        this.status = 'lost';
+      }
+      if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
+        this.removeActor(actorInstance);
+        if (this.actors.find(item => item.type === 'coin')) {
+          this.status = 'won';
+        }
+      }
+    }
+    catch (e) {
+      console.log(e);
     }
 
   }
+
 }
 
+// *******************************************************
 
+class LevelParser {
+  constructor(objectsDictionary) {
+    this.objectsDictionary = Object.assign({}, objectsDictionary);
+  }
 
+  actorFromSymbol(symbolString) {
+    return this.objectsDictionary[symbolString];
+  }
+
+  obstacleFromSymbol(symbolString) {
+    const OBSTACLES = {
+      'x': 'wall',
+      '!': 'lava'
+    };
+    return OBSTACLES[['x', '!']
+      .find(item => item === Object.keys(this.objectsDictionary)
+        .find(el => el === symbolString))];
+  }
+
+  createGrid(stringsArr) {
+
+  }
+}
