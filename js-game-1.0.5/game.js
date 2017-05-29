@@ -126,7 +126,9 @@ class Level {
 
 
     Object.defineProperty(this, 'player', {
-      get() {return this.actors.filter(item => item.type === 'player')[0]},
+      get() {
+        return this.actors.filter(item => item.type === 'player')[0]
+      },
       enumerable: true,
       configurable: true
     });
@@ -230,28 +232,69 @@ class Level {
 
 }
 
+//console.log('#######', Level.prototype.constructor);
+
 // *******************************************************
 
 class LevelParser {
   constructor(objectsDictionary) {
     this.objectsDictionary = Object.assign({}, objectsDictionary);
+    console.log(this.objectsDictionary);
   }
 
   actorFromSymbol(symbolString) {
     return this.objectsDictionary[symbolString];
+
   }
 
   obstacleFromSymbol(symbolString) {
     const OBSTACLES = {
-      'x': 'wall',
-      '!': 'lava'
+      '!': 'lava',
+      'x': 'wall'
     };
-    return OBSTACLES[['x', '!']
-      .find(item => item === Object.keys(this.objectsDictionary)
-        .find(el => el === symbolString))];
+    return OBSTACLES[symbolString];
   }
 
   createGrid(stringsArr) {
+    /*return stringsArr.map(item => Array.from(item))
+     .map(item => item.map(el => [' ', '@', 'v', '=', '|'].find(sim => sim === el)
+     ? undefined : el === 'x' ? 'wall' : el === '!' ? 'lava' : el));*/
 
+    return stringsArr.map(item => Array.from(item).map(el => this.obstacleFromSymbol(el)));
   }
+
+  createActors(plan) {
+    let actorsList = [];
+    plan.forEach((item, ind) =>
+      item.split('').forEach((el, pos) => {
+        const testingConstructor = this.actorFromSymbol(el);
+        if (testingConstructor!== undefined && testingConstructor.prototype.constructor === testingConstructor) {
+          actorsList.push(new testingConstructor(new Vector(pos, ind)));
+        }
+      }));
+    return actorsList;
+  }
+
+  parse(plan) {
+    const adoptedPlan = plan.slice();
+    const gridMatrix = this.createGrid(adoptedPlan);
+    const actorsList = this.createActors(adoptedPlan);
+    return new Level(gridMatrix, actorsList);
+  }
+
+
 }
+
+/*const plan = [
+  ' @ ',
+  'x!x'
+];
+const actorsDict = Object.create(null);
+actorsDict['@'] = Actor;
+
+const parser = new LevelParser(actorsDict);
+
+let a = parser.createActors(plan);
+console.log(a);
+console.log(Level.prototype.constructor);*/
+
