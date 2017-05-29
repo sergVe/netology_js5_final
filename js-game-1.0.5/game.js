@@ -232,8 +232,6 @@ class Level {
 
 }
 
-//console.log('#######', Level.prototype.constructor);
-
 // *******************************************************
 
 class LevelParser {
@@ -256,9 +254,6 @@ class LevelParser {
   }
 
   createGrid(stringsArr) {
-    /*return stringsArr.map(item => Array.from(item))
-     .map(item => item.map(el => [' ', '@', 'v', '=', '|'].find(sim => sim === el)
-     ? undefined : el === 'x' ? 'wall' : el === '!' ? 'lava' : el));*/
 
     return stringsArr.map(item => Array.from(item).map(el => this.obstacleFromSymbol(el)));
   }
@@ -285,16 +280,5 @@ class LevelParser {
 
 }
 
-/*const plan = [
-  ' @ ',
-  'x!x'
-];
-const actorsDict = Object.create(null);
-actorsDict['@'] = Actor;
 
-const parser = new LevelParser(actorsDict);
-
-let a = parser.createActors(plan);
-console.log(a);
-console.log(Level.prototype.constructor);*/
 
