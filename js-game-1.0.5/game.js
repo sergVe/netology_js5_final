@@ -11,7 +11,10 @@ class Vector {
     if (!(addedVector instanceof Vector)) {
       throw new Error('Error');
     }
+
+    // зачем try?
     try {
+      // тут нужно вернуть новый вектор, старый мутировать не нужно
       this.x += addedVector.x;
       this.y += addedVector.y;
       return new Vector(this.x, this.y);
@@ -27,8 +30,10 @@ class Vector {
     if (typeof multiplier !== 'number') {
       throw `В качестве множителя должно быть число`;
     }
+    // аналогично
     try {
 
+      // лишняя мутация
       this.x *= multiplier;
       this.y *= multiplier;
 
@@ -49,11 +54,13 @@ class Actor {
       throw new Error(`Все аргументы должны быть объектами типа Vector`);
     }
 
+    // зачем тут try?
     try {
       this.pos = pos;
       this.size = size;
       this.speed = new Vector(speed.x, speed.y);
 
+      // свойства и методы нужно определять как поля класса
       this.act = function () {
       };
 
@@ -93,12 +100,14 @@ class Actor {
 
 
   isIntersect(actorInstance) {
-
+    // зачем делать left, right, top, bottom аргументами, если они передаются один раз?
     const I = (a, b, x1, x2, y1, y2) => !(a[x2] <= b[x1] || a[x1] >= b[x2] || a[y2] <= b[y1] || a[y1] >= b[y2]);
 
     if (!(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали аргумент типа Actor`);
     }
+
+    // зачем тут try?
     try {
       if (this === actorInstance) {
         return false;
@@ -122,9 +131,11 @@ class Level {
 
     this.grid = gridMatrix.slice();
 
+    // filter по-моему, лишняя проверка
     this.actors = movingObjectsArray.slice().filter(item => item instanceof Object);
 
 
+    // объявить через поля класса
     Object.defineProperty(this, 'player', {
       get() {
         return this.actors.filter(item => item.type === 'player')[0]
@@ -156,6 +167,8 @@ class Level {
     if (arguments.length === 0 || !(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали движущийся объект`);
     }
+
+    // зачем try?
     try {
       return this.actors.find(item => item.isIntersect(actorInstance));
     }
@@ -165,6 +178,7 @@ class Level {
   }
 
   obstacleAt(objectPositionProspective, objectSize) {
+    // тут достаточно последовательно проверить оба аргумента
     if (arguments.length < 2 || [objectPositionProspective, objectSize].some(item => !item instanceof Vector)) {
       throw `Вы не передали объекты типа Vector`;
     }
@@ -180,15 +194,18 @@ class Level {
       return false;
     };
 
+    // зачем try?
     try {
       const virtualActor = new Actor(objectPositionProspective, objectSize);
       const checkResult = borderCheck(virtualActor);
       if (checkResult) {
         return checkResult;
       }
+
       const searchRowInd = this.grid.findIndex((row, ind) => row.find((ceil, pos) =>
         virtualActor.isIntersect(new Actor(new Vector(pos, ind)))));
 
+      // развернуть это выражение
       return searchRowInd !== -1
         ? this.grid[searchRowInd]
           .find((ceil, pos) => virtualActor.isIntersect(new Actor(new Vector(pos, searchRowInd)))) : undefined;
@@ -206,6 +223,7 @@ class Level {
   }
 
   noMoreActors(typeString) {
+    // чтобы избежать отрицания можно использовать every()
     return this.actors.length === 0 || !this.actors.some(item => item.type === typeString);
   }
 
@@ -213,6 +231,8 @@ class Level {
     if (typeof  typeObjectString !== 'string') {
       throw new Error(`Вы не передали стоку в первом обязательном параметре метода playerTouched`);
     }
+
+    // try
     try {
       if (['lava', 'fireball'].find(item => item === typeObjectString)) {
         this.status = 'lost';
@@ -246,6 +266,8 @@ class LevelParser {
   }
 
   obstacleFromSymbol(symbolString) {
+    // Это нужно вынести в поле класса (задать в конструкторе),
+    // иначе этот объект будет создаваться при каждом выхове метода
     const OBSTACLES = {
       '!': 'lava',
       'x': 'wall'
