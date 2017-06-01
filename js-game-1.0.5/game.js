@@ -172,7 +172,7 @@ class Level {
     }
     if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
       this.removeActor(actorInstance);
-      if (this.actors.find(item => item.type === 'coin')) {
+      if (this.noMoreActors('coin')) {
         this.status = 'won';
       }
     }
@@ -213,7 +213,7 @@ class LevelParser {
     plan.forEach((item, ind) =>
       item.split('').map((el, pos) => {
         const testingConstructor = this.actorFromSymbol(el);
-        if (testingConstructor) {
+        if (testingConstructor && (testingConstructor === Actor || Actor.prototype.isPrototypeOf(testingConstructor.prototype))) {
           actorsList.push(new testingConstructor(new Vector(pos, ind)));
         }
       }));
@@ -300,11 +300,11 @@ class FireRain extends Fireball {
 class Coin extends Actor {
   constructor(pos = new Vector()) {
     super();
-    const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+    this.rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
     this.size = new Vector(0.6, 0.6);
     this.pos = new Vector(pos.x + 0.2, pos.y + 0.1);
-    this.spring = rand(0, 2 * Math.PI);
+    this.spring = this.rand(0, 2 * Math.PI);
     this.springSpeed = 8;
     this.springDist = 0.07;
   }
