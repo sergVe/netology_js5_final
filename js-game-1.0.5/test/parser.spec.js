@@ -71,10 +71,14 @@ describe('Класс LevelParser', () => {
   });
 
   describe('Метод createGrid', () => {
-    const plan = [
-      'x  x',
-      '!!!!'
-    ];
+    let plan;
+
+    beforeEach(() => {
+      plan = [
+        'x  x',
+        '!!!!'
+      ];
+    });
 
     it('Вернет пустой массив, если передать пустой план', () => {
       const parser = new LevelParser();
@@ -120,11 +124,15 @@ describe('Класс LevelParser', () => {
   });
 
   describe('Метод createActors', () => {
-    const plan = [
-      'o   o',
-      '  z  ',
-      'o   o'
-    ];
+    let plan;
+
+    beforeEach(() => {
+      plan = [
+        'o   o',
+        '  z  ',
+        'o   o'
+      ];
+    });
 
     it('Вернет пустой массив, если передать пустой план', () => {
       const parser = new LevelParser({ o: Gift, z: Mushroom });
@@ -164,6 +172,22 @@ describe('Класс LevelParser', () => {
       const actors = parser.createActors(['b']);
 
       expect(actors).to.eql([]);
+    });
+
+    it('Создает движущиеся объекты для конструктора Actor', () => {
+      const parser = new LevelParser({ z: Actor });
+
+      const actors = parser.createActors(['z']);
+
+      expect(actors).to.have.length(1);
+    });
+
+    it('Создает движущиеся объекты правильного типа для конструктора Actor ', () => {
+      const parser = new LevelParser({ z: Actor });
+
+      const actors = parser.createActors(['z']);
+
+      expect(actors[0]).to.be.an.instanceof(Actor);
     });
 
     it('Создает движущиеся объекты для конструкторов типа Actor', () => {
@@ -215,11 +239,15 @@ describe('Класс LevelParser', () => {
   });
 
   describe('Метод parse', () => {
-    const plan = [
-      ' oxo ',
-      '!xzx!',
-      ' oxo '
-    ];
+    let plan;
+
+    beforeEach(() => {
+      plan = [
+        ' oxo ',
+        '!xzx!',
+        ' oxo '
+      ];
+    });
 
     it('Вернет объект уровня, Level', () => {
       const parser = new LevelParser();

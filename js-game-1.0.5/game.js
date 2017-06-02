@@ -346,5 +346,60 @@ class Player extends Actor {
   }
 }
 
-const test = new Fireball(new Vector(2, 3), new Vector(4, 6));
-console.log(test);
+// **********************************************8
+
+const schema = [
+  '         ',
+  '         ',
+  '    =    ',
+  '       o ',
+  '     !xxx',
+  ' @       ',
+  'xxx!     ',
+  '         '
+];
+/*
+const actorDict = {
+  '@': Player,
+  '=': HorizontalFireball
+}
+
+const level = parser.parse(schema);
+runLevel(level, DOMDisplay)
+  .then(status => console.log(`Игрок ${status}`));
+*/
+
+const schemas = [
+  [
+    '  v      ',
+    '         ',
+    '    =    ',
+    '       o ',
+    '     !xxx',
+    ' @       ',
+    'xxx!     ',
+    '         '
+  ],
+  [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ]
+];
+const actorDict = {
+  '@': Player,
+  'v': FireRain,
+  'o': Coin,
+  '=': HorizontalFireball
+}
+const parser = new LevelParser(actorDict);
+
+runGame(schemas, parser, DOMDisplay)
+  .then(() => alert('Вы выиграли приз!'));
+
+loadLevels();
