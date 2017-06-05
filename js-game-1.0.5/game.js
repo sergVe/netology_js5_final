@@ -66,8 +66,21 @@ class Actor {
 
   isIntersect(actorInstance) {
 
-    const intersectionResult = (firstObj, secondObj) => firstObj.right > secondObj.left && firstObj.left < secondObj.right
-    && firstObj.bottom > secondObj.top && firstObj.top < secondObj.bottom;
+    const intersectionResult = (firstObj, secondObj) => {
+      if (firstObj.right <= secondObj.left) {
+        return false;
+      }
+      if (firstObj.left >= secondObj.right) {
+        return false;
+      }
+      if (firstObj.bottom <= secondObj.top) {
+        return false;
+      }
+      if (firstObj.top >= secondObj.bottom) {
+        return false;
+      }
+      return true
+    };
 
     if (!(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали аргумент типа Actor`);
@@ -76,7 +89,7 @@ class Actor {
     if (this === actorInstance) {
       return false;
     }
-    return intersectionResult(actorInstance, this);
+    return intersectionResult(this, actorInstance);
   }
 
 }
@@ -141,13 +154,19 @@ class Level {
       return checkResult;
     }
 
-    const searchRowInd = this.grid.findIndex((row, ind) => row.find((ceil, pos) =>
-      virtualActor.isIntersect(new Actor(new Vector(pos, ind)))));
+    const leftLimit = Math.floor(virtualActor.left);
+    const rightLimit = Math.ceil(virtualActor.right);
+    const topLimit = Math.floor(virtualActor.top);
+    const bottomLimit = Math.ceil(virtualActor.bottom);
+    const possibleIntersectionArea = new Actor(new Vector(leftLimit, topLimit), new Vector(rightLimit - leftLimit, bottomLimit - topLimit));
+   const searchRowInd = this.grid.findIndex((row, ind) => row.find((cell, pos) =>
+      b.isIntersect(new Actor(new Vector(pos, ind))) && cell));
 
     if (searchRowInd === -1) {
       return undefined;
     }
-    return this.grid[searchRowInd].find((ceil, pos) => virtualActor.isIntersect(new Actor(new Vector(pos, searchRowInd))));
+    return this.grid[searchRowInd].find((cell, pos) =>  possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, searchRowInd))) && cell);
+
   }
 
   removeActor(actorInstance) {
@@ -164,7 +183,7 @@ class Level {
 
   playerTouched(typeObjectString, actorInstance) {
     if (typeof  typeObjectString !== 'string') {
-      throw new Error(`Вы не передали стоку в первом обязательном параметре метода playerTouched`);
+      throw new Error(`Вы не передали строку в первом обязательном параметре метода playerTouched`);
     }
 
     if (['lava', 'fireball'].find(item => item === typeObjectString)) {
@@ -346,60 +365,38 @@ class Player extends Actor {
   }
 }
 
-// **********************************************8
+// **********************************************
 
 const schema = [
   '         ',
+  '  |     ',
   '         ',
-  '    =    ',
-  '       o ',
-  '     !xxx',
-  ' @       ',
-  'xxx!     ',
+  '       @ ',
+  '     xxxxxx!',
+  ' o        ',
+  'xxxxx     ',
   '         '
 ];
-/*
-const actorDict = {
-  '@': Player,
-  '=': HorizontalFireball
-}
 
-const level = parser.parse(schema);
-runLevel(level, DOMDisplay)
-  .then(status => console.log(`Игрок ${status}`));
-*/
-
-const schemas = [
-  [
-    '  v      ',
-    '         ',
-    '    =    ',
-    '       o ',
-    '     !xxx',
-    ' @       ',
-    'xxx!     ',
-    '         '
-  ],
-  [
-    '      v  ',
-    '    v    ',
-    '  v      ',
-    '        o',
-    '        x',
-    '@   x    ',
-    'x        ',
-    '         '
-  ]
-];
 const actorDict = {
   '@': Player,
   'v': FireRain,
   'o': Coin,
-  '=': HorizontalFireball
-}
+  '=': HorizontalFireball,
+  '|': VerticalFireball
+};
 const parser = new LevelParser(actorDict);
+const level = parser.parse(schema);
+runLevel(level, DOMDisplay)
+  .then(status => alert(`Игрок ${status}`));
 
-runGame(schemas, parser, DOMDisplay)
-  .then(() => alert('Вы выиграли приз!'));
 
-loadLevels();
+/*loadLevels()
+ .then((v) => JSON.parse(v))
+ .then((v) => runGame(v, parser, DOMDisplay))
+ .then(v => console.log(`Вы получили приз`));*/
+
+
+
+
+

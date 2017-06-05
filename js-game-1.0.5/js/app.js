@@ -254,9 +254,11 @@ function runGame(plans, Parser, Display) {
     function startLevel(n) {
       runLevel(Parser.parse(plans[n]), Display)
         .then(status => {
-          if (status == "lost") {
+          if (status === "lost") {
+            alert('lost');
             startLevel(n);
           } else if (n < plans.length - 1) {
+            alert('win');
             startLevel(n + 1);
           } else {
             done();
