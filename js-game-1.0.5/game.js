@@ -154,18 +154,13 @@ class Level {
       return checkResult;
     }
 
-    const leftLimit = Math.floor(virtualActor.left);
-    const rightLimit = Math.ceil(virtualActor.right);
-    const topLimit = Math.floor(virtualActor.top);
-    const bottomLimit = Math.ceil(virtualActor.bottom);
-    const possibleIntersectionArea = new Actor(new Vector(leftLimit, topLimit), new Vector(rightLimit - leftLimit, bottomLimit - topLimit));
    const searchRowInd = this.grid.findIndex((row, ind) => row.find((cell, pos) =>
-      possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, ind))) && cell));
+   virtualActor.isIntersect(new Actor(new Vector(pos, ind))) && cell));
 
     if (searchRowInd === -1) {
       return undefined;
     }
-    return this.grid[searchRowInd].find((cell, pos) =>  possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, searchRowInd))) && cell);
+    return this.grid[searchRowInd].find((cell, pos) =>  virtualActor.isIntersect(new Actor(new Vector(pos, searchRowInd))) && cell);
 
   }
 
@@ -371,8 +366,8 @@ const schema = [
   '         ',
   '  |     ',
   '         ',
-  '       @ ',
-  '     xxxxxx!',
+  '      x @  x',
+  '     xxxxxxx!',
   ' o        ',
   'xxxxx     ',
   '         '
