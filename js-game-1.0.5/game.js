@@ -18,7 +18,7 @@ class Vector {
   times(multiplier) {
 
     // тут можно проверить ещё isNaN
-    if (typeof multiplier !== 'number') {
+    if (isNaN(multiplier) || typeof multiplier !== 'number') {
       throw new Error(`В качестве множителя должно быть число`);
     }
 
@@ -66,23 +66,6 @@ class Actor {
   }
 
   isIntersect(actorInstance) {
-
-    const intersectionResult = (firstObj, secondObj) => {
-      if (firstObj.right <= secondObj.left) {
-        return false;
-      }
-      if (firstObj.left >= secondObj.right) {
-        return false;
-      }
-      if (firstObj.bottom <= secondObj.top) {
-        return false;
-      }
-      if (firstObj.top >= secondObj.bottom) {
-        return false;
-      }
-      return true
-    };
-
     if (!(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали аргумент типа Actor`);
     }
@@ -91,8 +74,23 @@ class Actor {
       return false;
     }
 
+    if (this.right <= actorInstance.left) {
+      return false;
+    }
+    if (this.left >= actorInstance.right) {
+      return false;
+    }
+    if (this.bottom <= actorInstance.top) {
+      return false;
+    }
+    if (this.top >= actorInstance.bottom) {
+      return false;
+    }
+    return true;
+
+
     // в данном случае лучше не выделять это в фунцию
-    return intersectionResult(this, actorInstance);
+
   }
 
 }
@@ -106,25 +104,25 @@ class Level {
     this.actors = movingObjectsArray.slice();
     this.status = null;
     this.finishDelay = 1;
+    this.height = this.grid.length;
+    this.width = this.grid.reduce((memo, item) => item.length > memo ? item.length : memo, 0);
   }
 
   get player() {
     // здесь лучше использовать find
-    return this.actors.filter(item => item.type === 'player')[0]
+    return this.actors.find(item => item.type === 'player');
   }
 
-  get height() {
-    // это лучше заполнить в конструкторе
-    // и я не до конца понял зачем проверка того, что каждый элемент массива является массивом
-    return (this.grid.every(item => Array.isArray(item))) ? this.grid.length : 1;
-  }
 
-  get width() {
-    // reduce - правильно, лучше это посчитать в конструкторе
-    // начать можно с 0, чтобы проще было
-    let start = this.height > 1 ? this.grid[0].length : this.grid.length;
-    return this.grid.reduce((memo, item) => item.length > memo ? item.length : memo, start);
-  }
+  // это лучше заполнить в конструкторе
+  // и я не до конца понял зачем проверка того, что каждый элемент массива является массивом
+
+  //serg: height убрал
+
+  // reduce - правильно, лучше это посчитать в конструкторе
+  // начать можно с 0, чтобы проще было
+
+  // serg: width убрал
 
   isFinished() {
     return this.status !== null && this.finishDelay < 0;
@@ -162,21 +160,14 @@ class Level {
       return checkResult;
     }
 
-    const leftLimit = Math.floor(virtualActor.left);
-    const rightLimit = Math.ceil(virtualActor.right);
-    const topLimit = Math.floor(virtualActor.top);
-    const bottomLimit = Math.ceil(virtualActor.bottom);
-
     // Здесь не нужно использовать isIntersect
     // нужно просто получить ячейку поля и если там есть препятсявие - вернуть его
-    const possibleIntersectionArea = new Actor(new Vector(leftLimit, topLimit), new Vector(rightLimit - leftLimit, bottomLimit - topLimit));
-   const searchRowInd = this.grid.findIndex((row, ind) => row.find((cell, pos) =>
-      possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, ind))) && cell));
+    const searchRowIndex = this.grid.findIndex((row, ind) => row.find((cell, pos) => pos >= Math.floor(virtualActor.left) && pos < Math.ceil(virtualActor.right) && ind >= Math.floor(virtualActor.top) && ind < Math.ceil(virtualActor.bottom) && cell));
 
-    if (searchRowInd === -1) {
+    if (searchRowIndex === -1) {
       return undefined;
     }
-    return this.grid[searchRowInd].find((cell, pos) =>  possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, searchRowInd))) && cell);
+    return this.grid[searchRowIndex].find((cell, pos) => pos >= Math.floor(virtualActor.left) && pos < Math.ceil(virtualActor.right) && cell);
 
   }
 
@@ -200,6 +191,7 @@ class Level {
     if (['lava', 'fireball'].find(item => item === typeObjectString)) {
       this.status = 'lost';
       // здесь лучше написать return; чтобы прекратить выполнение функции
+      return;
     }
     if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
       this.removeActor(actorInstance);
@@ -216,23 +208,25 @@ class Level {
 class LevelParser {
   constructor(objectsDictionary) {
     this.objectsDictionary = Object.assign({}, objectsDictionary);
+    this.OBSTACLES = {
+      '!': 'lava',
+      'x': 'wall'
+    };
 
     // лучше задать не в конструкторе, а ниже
-    this.obstacleFromSymbol = function (symbolString) {
-      // сейчас объект OBSTACLES будет создавать каждый раз при выполнении функции
-      // лучше вынести его выше или сделать полем класса, можно статическим
-      const OBSTACLES = {
-        '!': 'lava',
-        'x': 'wall'
-      };
-      return OBSTACLES[symbolString];
-    }
+    // сейчас объект OBSTACLES будет создавать каждый раз при выполнении функции
+    // лучше вынести его выше или сделать полем класса, можно статическим
+
+  }
+
+  obstacleFromSymbol(symbolString) {
+    return this.OBSTACLES[symbolString];
   }
 
   actorFromSymbol(symbolString) {
     const testingConstructor = this.objectsDictionary[symbolString];
     // в чём смысл второй проверки?
-    if (typeof testingConstructor === 'function' && testingConstructor.prototype.constructor === testingConstructor) {
+    if (typeof testingConstructor === 'function') {
       return testingConstructor;
     }
     return undefined;
@@ -240,7 +234,7 @@ class LevelParser {
 
   createGrid(stringsArr) {
     // лучше преращать строку в массив с помощью split - так сразу понятно, что идёт работа со строкой
-    return stringsArr.map(item => Array.from(item).map(el => this.obstacleFromSymbol(el)));
+    return stringsArr.map(item => item.split('').map(el => this.obstacleFromSymbol(el)));
   }
 
   createActors(plan) {
@@ -250,7 +244,7 @@ class LevelParser {
         const testingConstructor = this.actorFromSymbol(el);
         // не совсем так. нужно проверить, что testingConstructor это функция,
         // создать объект и проверить, что он instanceof Actor
-        if (testingConstructor && (testingConstructor === Actor || Actor.prototype.isPrototypeOf(testingConstructor.prototype))) {
+        if (testingConstructor && new testingConstructor() instanceof Actor) {
           actorsList.push(new testingConstructor(new Vector(pos, ind)));
         }
       }));
@@ -259,9 +253,8 @@ class LevelParser {
 
   parse(plan) {
     // здесь можно не копировать массив - он не мутируется
-    const adoptedPlan = plan.slice();
-    const gridMatrix = this.createGrid(adoptedPlan);
-    const actorsList = this.createActors(adoptedPlan);
+    const gridMatrix = this.createGrid(plan);
+    const actorsList = this.createActors(plan);
     return new Level(gridMatrix, actorsList);
   }
 
@@ -271,9 +264,9 @@ class LevelParser {
 
 class Fireball extends Actor {
   constructor(pos, speed) {
-    super(pos, speed, speed);
+    super(pos, new Vector(1, 1), speed);
     // должно заполняться в конструкторе базового класса
-    this.size = new Vector(1, 1);
+
   }
 
   get type() {
@@ -282,20 +275,20 @@ class Fireball extends Actor {
 
   getNextPosition(time = 1) {
     // здесь нужно использовать plus и times
-    return new Vector(this.pos.x + time * this.speed.x, this.pos.y + time * this.speed.y);
+    return this.pos.plus(this.speed.times(time));
   }
 
   handleObstacle() {
     // здесь нужно использовать times
-    this.speed.x = -this.speed.x;
-    this.speed.y = -this.speed.y;
+    this.speed = this.speed.times(-1);
   }
 
   act(time, levelObj) {
     const nextPos = this.getNextPosition(time);
     if (levelObj.obstacleAt(nextPos, this.size)) {
       this.handleObstacle();
-    // лучше так не переносить
+      // лучше так не переносить
+      // serg: ?
     }
     else {
       this.pos = nextPos;
@@ -307,8 +300,7 @@ class Fireball extends Actor {
 
 class HorizontalFireball extends Fireball {
   constructor(pos) {
-    super(pos);
-    this.speed = new Vector(2, 0);
+    super(pos, new Vector(2, 0));
   }
 
 }
@@ -317,9 +309,8 @@ class HorizontalFireball extends Fireball {
 
 class VerticalFireball extends Fireball {
   constructor(pos) {
-    super(pos);
+    super(pos, new Vector(0, 2));
     // поле должно заполняться в конструкторе базового класса
-    this.speed = new Vector(0, 2);
   }
 }
 
@@ -327,15 +318,14 @@ class VerticalFireball extends Fireball {
 
 class FireRain extends Fireball {
   constructor(pos) {
-    super(pos);
+    super(pos, new Vector(0, 3));
     this.initialPos = pos;
     // поле должно заполняться в конструкторе базового класса
-    this.speed = new Vector(0, 3);
   }
 
   handleObstacle() {
     // this.initialPos уже вектор, можно не создавать новый
-    this.pos = new Vector(this.initialPos.x, this.initialPos.y);
+    this.pos = this.initialPos;
   }
 
 }
@@ -344,15 +334,14 @@ class FireRain extends Fireball {
 
 class Coin extends Actor {
   constructor(pos = new Vector()) {
-    super();
+    super(new Vector(pos.x + 0.2, pos.y + 0.1), new Vector(0.6, 0.6));
     this.rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
     // size и pos должны задаваться через конструктор базовго класса
-    this.size = new Vector(0.6, 0.6);
-    this.pos = new Vector(pos.x + 0.2, pos.y + 0.1);
     this.spring = this.rand(0, 2 * Math.PI);
     this.springSpeed = 8;
     this.springDist = 0.07;
+    this.initialPos = this.pos;
   }
 
   get type() {
@@ -361,6 +350,7 @@ class Coin extends Actor {
 
   updateSpring(time = 1) {
     this.spring = this.spring + this.springSpeed * time;
+
   }
 
   getSpringVector() {
@@ -370,7 +360,8 @@ class Coin extends Actor {
   getNextPosition(time = 1) {
     this.updateSpring(time);
     const delta = this.getSpringVector(time);
-    return new Vector(this.pos.x, this.pos.y + delta.y);
+
+    return this.initialPos.plus(new Vector(0, delta.y));
   }
 
   act(time) {
@@ -382,9 +373,9 @@ class Coin extends Actor {
 
 class Player extends Actor {
   constructor(pos = new Vector()) {
-    super();
-    this.pos = new Vector(pos.x, pos.y - 0.5);
-    this.size = new Vector(0.8, 1.5);
+    super(new Vector(pos.x, pos.y - 0.5), new Vector(0.8, 1.5));
+    //this.pos = new Vector(pos.x, pos.y - 0.5);
+    //this.size = new Vector(0.8, 1.5);
   }
 
   get type() {
@@ -398,8 +389,8 @@ const schema = [
   '         ',
   '  |     ',
   '         ',
-  '       @ ',
-  '     xxxxxx!',
+  '     x  @ x',
+  '     xxxxxxx!',
   ' o        ',
   'xxxxx     ',
   '         '
