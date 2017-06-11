@@ -17,6 +17,7 @@ class Vector {
 
   times(multiplier) {
 
+    // тут можно проверить ещё isNaN
     if (typeof multiplier !== 'number') {
       throw new Error(`В качестве множителя должно быть число`);
     }
@@ -89,6 +90,8 @@ class Actor {
     if (this === actorInstance) {
       return false;
     }
+
+    // в данном случае лучше не выделять это в фунцию
     return intersectionResult(this, actorInstance);
   }
 
@@ -106,14 +109,19 @@ class Level {
   }
 
   get player() {
+    // здесь лучше использовать find
     return this.actors.filter(item => item.type === 'player')[0]
   }
 
   get height() {
+    // это лучше заполнить в конструкторе
+    // и я не до конца понял зачем проверка того, что каждый элемент массива является массивом
     return (this.grid.every(item => Array.isArray(item))) ? this.grid.length : 1;
   }
 
   get width() {
+    // reduce - правильно, лучше это посчитать в конструкторе
+    // начать можно с 0, чтобы проще было
     let start = this.height > 1 ? this.grid[0].length : this.grid.length;
     return this.grid.reduce((memo, item) => item.length > memo ? item.length : memo, start);
   }
@@ -158,6 +166,9 @@ class Level {
     const rightLimit = Math.ceil(virtualActor.right);
     const topLimit = Math.floor(virtualActor.top);
     const bottomLimit = Math.ceil(virtualActor.bottom);
+
+    // Здесь не нужно использовать isIntersect
+    // нужно просто получить ячейку поля и если там есть препятсявие - вернуть его
     const possibleIntersectionArea = new Actor(new Vector(leftLimit, topLimit), new Vector(rightLimit - leftLimit, bottomLimit - topLimit));
    const searchRowInd = this.grid.findIndex((row, ind) => row.find((cell, pos) =>
       possibleIntersectionArea.isIntersect(new Actor(new Vector(pos, ind))) && cell));
@@ -188,6 +199,7 @@ class Level {
 
     if (['lava', 'fireball'].find(item => item === typeObjectString)) {
       this.status = 'lost';
+      // здесь лучше написать return; чтобы прекратить выполнение функции
     }
     if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
       this.removeActor(actorInstance);
@@ -205,7 +217,10 @@ class LevelParser {
   constructor(objectsDictionary) {
     this.objectsDictionary = Object.assign({}, objectsDictionary);
 
+    // лучше задать не в конструкторе, а ниже
     this.obstacleFromSymbol = function (symbolString) {
+      // сейчас объект OBSTACLES будет создавать каждый раз при выполнении функции
+      // лучше вынести его выше или сделать полем класса, можно статическим
       const OBSTACLES = {
         '!': 'lava',
         'x': 'wall'
@@ -216,6 +231,7 @@ class LevelParser {
 
   actorFromSymbol(symbolString) {
     const testingConstructor = this.objectsDictionary[symbolString];
+    // в чём смысл второй проверки?
     if (typeof testingConstructor === 'function' && testingConstructor.prototype.constructor === testingConstructor) {
       return testingConstructor;
     }
@@ -223,7 +239,7 @@ class LevelParser {
   }
 
   createGrid(stringsArr) {
-
+    // лучше преращать строку в массив с помощью split - так сразу понятно, что идёт работа со строкой
     return stringsArr.map(item => Array.from(item).map(el => this.obstacleFromSymbol(el)));
   }
 
@@ -232,6 +248,8 @@ class LevelParser {
     plan.forEach((item, ind) =>
       item.split('').map((el, pos) => {
         const testingConstructor = this.actorFromSymbol(el);
+        // не совсем так. нужно проверить, что testingConstructor это функция,
+        // создать объект и проверить, что он instanceof Actor
         if (testingConstructor && (testingConstructor === Actor || Actor.prototype.isPrototypeOf(testingConstructor.prototype))) {
           actorsList.push(new testingConstructor(new Vector(pos, ind)));
         }
@@ -240,6 +258,7 @@ class LevelParser {
   }
 
   parse(plan) {
+    // здесь можно не копировать массив - он не мутируется
     const adoptedPlan = plan.slice();
     const gridMatrix = this.createGrid(adoptedPlan);
     const actorsList = this.createActors(adoptedPlan);
@@ -253,6 +272,7 @@ class LevelParser {
 class Fireball extends Actor {
   constructor(pos, speed) {
     super(pos, speed, speed);
+    // должно заполняться в конструкторе базового класса
     this.size = new Vector(1, 1);
   }
 
@@ -261,10 +281,12 @@ class Fireball extends Actor {
   }
 
   getNextPosition(time = 1) {
+    // здесь нужно использовать plus и times
     return new Vector(this.pos.x + time * this.speed.x, this.pos.y + time * this.speed.y);
   }
 
   handleObstacle() {
+    // здесь нужно использовать times
     this.speed.x = -this.speed.x;
     this.speed.y = -this.speed.y;
   }
@@ -273,6 +295,7 @@ class Fireball extends Actor {
     const nextPos = this.getNextPosition(time);
     if (levelObj.obstacleAt(nextPos, this.size)) {
       this.handleObstacle();
+    // лучше так не переносить
     }
     else {
       this.pos = nextPos;
@@ -295,6 +318,7 @@ class HorizontalFireball extends Fireball {
 class VerticalFireball extends Fireball {
   constructor(pos) {
     super(pos);
+    // поле должно заполняться в конструкторе базового класса
     this.speed = new Vector(0, 2);
   }
 }
@@ -305,10 +329,12 @@ class FireRain extends Fireball {
   constructor(pos) {
     super(pos);
     this.initialPos = pos;
+    // поле должно заполняться в конструкторе базового класса
     this.speed = new Vector(0, 3);
   }
 
   handleObstacle() {
+    // this.initialPos уже вектор, можно не создавать новый
     this.pos = new Vector(this.initialPos.x, this.initialPos.y);
   }
 
@@ -321,6 +347,7 @@ class Coin extends Actor {
     super();
     this.rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 
+    // size и pos должны задаваться через конструктор базовго класса
     this.size = new Vector(0.6, 0.6);
     this.pos = new Vector(pos.x + 0.2, pos.y + 0.1);
     this.spring = this.rand(0, 2 * Math.PI);
@@ -390,6 +417,9 @@ const level = parser.parse(schema);
 runLevel(level, DOMDisplay)
   .then(status => alert(`Игрок ${status}`));
 
+// Ниже написан правильный код запуска игры, только console.log лучше заменить на alert
+
+// Также монетки не должны залетать в стены
 
 /*loadLevels()
  .then((v) => JSON.parse(v))
