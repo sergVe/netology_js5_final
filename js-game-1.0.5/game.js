@@ -140,13 +140,17 @@ class Level {
 
     const checkResult = this.hasBoundaryIntersection(virtualActor);
 
-   if (checkResult) {
+    if (checkResult) {
       return checkResult;
     }
 
-    const searchRowIndex = this.grid.find((row, ind) => row.find((cell, pos) => pos >= Math.floor(virtualActor.left) && pos < Math.ceil(virtualActor.right) && ind >= Math.floor(virtualActor.top) && ind < Math.ceil(virtualActor.bottom) && cell));
+    const checkingArea = this.grid.slice(Math.floor(virtualActor.top), Math.ceil(virtualActor.bottom));
+    const leftLimit = Math.floor(virtualActor.left);
+    const rightLimit = Math.ceil(virtualActor.right);
+    const searchRow = checkingArea.find(row => row.slice(leftLimit, rightLimit).find(cell => cell));
 
-    return searchRowIndex ? searchRowIndex.find(cell => cell) : undefined;
+    return searchRow ? searchRow.slice(leftLimit, rightLimit).find(cell => cell) : undefined;
+
   }
 
   removeActor(actorInstance) {
@@ -353,9 +357,9 @@ const actorDict = {
 const parser = new LevelParser(actorDict);
 
 loadLevels()
- .then((v) => JSON.parse(v))
- .then((v) => runGame(v, parser, DOMDisplay))
- .then(v => console.log(`Вы получили приз`));
+  .then((v) => JSON.parse(v))
+  .then((v) => runGame(v, parser, DOMDisplay))
+  .then(v => alert(`Вы получили приз`));
 
 
 
