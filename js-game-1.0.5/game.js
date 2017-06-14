@@ -119,16 +119,6 @@ class Level {
     return this.actors.find(item => item.isIntersect(actorInstance));
   }
 
-  hasBoundaryIntersection(left, right, top, bottom) {
-    if (left < 0 || right > this.width || top < 0) {
-      return 'wall';
-    }
-    if (bottom > this.height) {
-      return 'lava';
-    }
-    return false;
-  }
-
   obstacleAt(positionProspective, objectSize) {
 
     if ([positionProspective, objectSize].some(item => !item instanceof Vector)) {
@@ -138,16 +128,19 @@ class Level {
     const rightLimit = Math.ceil(positionProspective.x + objectSize.x);
     const topLimit = Math.floor(positionProspective.y);
     const  bottomLimit = Math.ceil(positionProspective.y + objectSize.y);
-    const checkBoundary = this.hasBoundaryIntersection(leftLimit, rightLimit, topLimit, bottomLimit);
 
-    if (checkBoundary) {
-      return checkBoundary;
+    if (leftLimit < 0 || rightLimit > this.width || topLimit < 0) {
+      return 'wall';
+    }
+    if (bottomLimit > this.height) {
+      return 'lava';
     }
 
     for (let y = topLimit; y < bottomLimit; y++) {
       for (let x = leftLimit; x < rightLimit; x++) {
-        if (this.grid[y][x]) {
-          return this.grid[y][x];
+        const cell = this.grid[y][x];
+        if (cell) {
+          return cell;
 
         }
       }
