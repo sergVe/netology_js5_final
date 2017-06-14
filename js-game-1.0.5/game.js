@@ -119,42 +119,44 @@ class Level {
     return this.actors.find(item => item.isIntersect(actorInstance));
   }
 
-  hasBoundaryIntersection(actorInstance) {
-    if (actorInstance.left < 0 || actorInstance.right > this.width
-      || actorInstance.top < 0) {
+  hasBoundaryIntersection(left, right, top, bottom) {
+    if (left < 0 || right > this.width || top < 0) {
       return 'wall';
     }
-    if (actorInstance.bottom > this.height) {
+    if (bottom > this.height) {
       return 'lava';
     }
     return false;
   }
 
-  obstacleAt(objectPositionProspective, objectSize) {
+  obstacleAt(positionProspective, objectSize) {
 
-    if ([objectPositionProspective, objectSize].some(item => !item instanceof Vector)) {
+    if ([positionProspective, objectSize].some(item => !item instanceof Vector)) {
       throw `Вы не передали объекты типа Vector`;
     }
+    const leftLimit = Math.floor(positionProspective.x);
+    const rightLimit = Math.ceil(positionProspective.x + objectSize.x);
+    const topLimit = Math.floor(positionProspective.y);
+    const  bottomLimit = Math.ceil(positionProspective.y + objectSize.y);
+    const checkBoundary = this.hasBoundaryIntersection(leftLimit, rightLimit, topLimit, bottomLimit);
 
-    const virtualActor = new Actor(objectPositionProspective, objectSize);
-
-    const checkResult = this.hasBoundaryIntersection(virtualActor);
-
-    if (checkResult) {
-      return checkResult;
+    if (checkBoundary) {
+      return checkBoundary;
     }
 
-    const checkingArea = this.grid.slice(Math.floor(virtualActor.top), Math.ceil(virtualActor.bottom));
-    const leftLimit = Math.floor(virtualActor.left);
-    const rightLimit = Math.ceil(virtualActor.right);
-    const searchRow = checkingArea.find(row => row.slice(leftLimit, rightLimit).find(cell => cell));
+    for (let y = topLimit; y < bottomLimit; y++) {
+      for (let x = leftLimit; x < rightLimit; x++) {
+        if (this.grid[y][x]) {
+          return this.grid[y][x];
 
-    return searchRow ? searchRow.slice(leftLimit, rightLimit).find(cell => cell) : undefined;
-
+        }
+      }
+    }
+    return undefined;
   }
 
   removeActor(actorInstance) {
-    const foundIndex = this.actors.findIndex(item => item === actorInstance);
+    const foundIndex = this.actors.indexOf(actorInstance);
     if (foundIndex !== -1) {
       this.actors.splice(foundIndex, 1);
     }
@@ -162,14 +164,16 @@ class Level {
 
   noMoreActors(typeString) {
 
-    return this.actors.length === 0 || this.actors.every(item => item.type !== typeString);
+    return !this.actors.some(item => item.type === typeString);
   }
 
   playerTouched(typeObjectString, actorInstance) {
     if (typeof  typeObjectString !== 'string') {
       throw new Error(`Вы не передали строку в первом обязательном параметре метода playerTouched`);
     }
-    if (this.status === null) {
+    if (this.status !== null) {
+      return;
+    }
       if (['lava', 'fireball'].find(item => item === typeObjectString)) {
         this.status = 'lost';
         return;
@@ -180,7 +184,6 @@ class Level {
           this.status = 'won';
         }
       }
-    }
   }
 
 }
@@ -215,7 +218,7 @@ class LevelParser {
   createActors(plan) {
     let actorsList = [];
     plan.forEach((item, ind) =>
-      item.split('').map((el, pos) => {
+      item.split('').forEach((el, pos) => {
         const testingConstructor = this.actorFromSymbol(el);
         if (testingConstructor) {
           const testingInstance = new testingConstructor(new Vector(pos, ind));
