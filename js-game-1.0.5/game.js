@@ -7,30 +7,24 @@ class Vector {
   }
 
   plus(addedVector) {
-
     if (!(addedVector instanceof Vector)) {
       throw new Error('Error: должен быть передан объект типа Vector');
     }
-
     return new Vector(this.x + addedVector.x, this.y + addedVector.y);
   }
 
   times(multiplier) {
-
     if (isNaN(multiplier) || typeof multiplier !== 'number') {
       throw new Error(`В качестве множителя должно быть число`);
     }
-
     return new Vector(this.x * multiplier, this.y * multiplier);
   }
-
 }
 
 // ************************************
 
 class Actor {
   constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
-
     if ([pos, size, speed].some((item) => !(item instanceof Vector))) {
       throw new Error(`Все аргументы должны быть объектами типа Vector`);
     }
@@ -68,11 +62,9 @@ class Actor {
     if (!(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали аргумент типа Actor`);
     }
-
     if (this === actorInstance) {
       return false;
     }
-
     if (this.right <= actorInstance.left) {
       return false;
     }
@@ -94,7 +86,6 @@ class Actor {
 
 class Level {
   constructor(gridMatrix = [], movingObjectsArray = []) {
-
     this.grid = gridMatrix.slice();
     this.actors = movingObjectsArray.slice();
     this.status = null;
@@ -115,19 +106,17 @@ class Level {
     if (!(actorInstance instanceof Actor)) {
       throw new Error(`Вы не передали движущийся объект`);
     }
-
     return this.actors.find(item => item.isIntersect(actorInstance));
   }
 
   obstacleAt(positionProspective, objectSize) {
-
     if ([positionProspective, objectSize].some(item => !item instanceof Vector)) {
       throw `Вы не передали объекты типа Vector`;
     }
     const leftLimit = Math.floor(positionProspective.x);
     const rightLimit = Math.ceil(positionProspective.x + objectSize.x);
     const topLimit = Math.floor(positionProspective.y);
-    const  bottomLimit = Math.ceil(positionProspective.y + objectSize.y);
+    const bottomLimit = Math.ceil(positionProspective.y + objectSize.y);
 
     if (leftLimit < 0 || rightLimit > this.width || topLimit < 0) {
       return 'wall';
@@ -141,7 +130,6 @@ class Level {
         const cell = this.grid[y][x];
         if (cell) {
           return cell;
-
         }
       }
     }
@@ -156,7 +144,6 @@ class Level {
   }
 
   noMoreActors(typeString) {
-
     return !this.actors.some(item => item.type === typeString);
   }
 
@@ -167,16 +154,16 @@ class Level {
     if (this.status !== null) {
       return;
     }
-      if (['lava', 'fireball'].find(item => item === typeObjectString)) {
-        this.status = 'lost';
-        return;
+    if (['lava', 'fireball'].find(item => item === typeObjectString)) {
+      this.status = 'lost';
+      return;
+    }
+    if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
+      this.removeActor(actorInstance);
+      if (this.noMoreActors('coin')) {
+        this.status = 'won';
       }
-      if (typeObjectString === 'coin' && actorInstance.type === 'coin') {
-        this.removeActor(actorInstance);
-        if (this.noMoreActors('coin')) {
-          this.status = 'won';
-        }
-      }
+    }
   }
 
 }
@@ -236,7 +223,6 @@ class LevelParser {
 class Fireball extends Actor {
   constructor(pos, speed) {
     super(pos, new Vector(1, 1), speed);
-
   }
 
   get type() {
@@ -320,7 +306,6 @@ class Coin extends Actor {
   getNextPosition(time = 1) {
     this.updateSpring(time);
     const delta = this.getSpringVector(time);
-
     return this.initialPos.plus(new Vector(0, delta.y));
   }
 
